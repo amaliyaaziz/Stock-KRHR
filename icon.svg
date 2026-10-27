@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="110" fill="#f7dce4"/>
+  <rect x="75" y="70" width="362" height="372" rx="38" fill="#ffffff"/>
+  <rect x="75" y="70" width="362" height="90" rx="38" fill="#bca8df"/>
+  <rect x="75" y="125" width="362" height="35" fill="#bca8df"/>
+  <rect x="220" y="48" width="72" height="50" rx="18" fill="#8d739e"/>
+  <path d="M120 218 L145 243 L185 196" fill="none" stroke="#85c9a5" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M120 285 L145 310 L185 263" fill="none" stroke="#85c9a5" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M120 352 L145 377 L185 330" fill="none" stroke="#85c9a5" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#7d688d">
+    <rect x="210" y="210" width="165" height="15" rx="7"/>
+    <rect x="210" y="277" width="140" height="15" rx="7"/>
+    <rect x="210" y="344" width="165" height="15" rx="7"/>
+  </g>
+  <text x="256" y="410" font-family="Arial,sans-serif" font-size="30" font-weight="bold" text-anchor="middle" fill="#7d688d">KRHR</text>
+</svg>
