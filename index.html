@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7dce4">
+<meta name="description" content="Pengurusan stok Stock KRHR">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>Stock KRHR</title>
+<style>
+:root{--pink:#f7dce4;--lav:#e8e1fa;--mint:#dff2e8;--ink:#39434d;--purple:#8d739e}
+*{box-sizing:border-box}
+body{margin:0;background:#fffaf7;color:var(--ink);font:15px system-ui,sans-serif}
+header{padding:20px;background:linear-gradient(120deg,var(--pink),var(--lav),var(--mint));position:sticky;top:0}
+h1{margin:0;font-size:25px}header p{margin:4px 0}
+main{max-width:1000px;margin:auto;padding:16px}
+button,input{font:inherit;padding:10px;border-radius:10px;border:1px solid #e8dfe7}
+button{background:#f1eaf6;color:#59476b;cursor:pointer;margin:3px}
+.primary{background:var(--purple);color:white}
+.card{background:white;padding:16px;margin:10px 0;border:1px solid #eee5e1;border-radius:16px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.muted{color:#7b8790;font-size:13px}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{text-align:left;padding:9px;border-bottom:1px solid #eee5e1}
+th{background:#fff0f4}
+input.qty{width:75px}
+input.note{width:150px}
+.tablebox{overflow-x:auto}
+#crumb{margin:14px 0}
+</style>
+</head>
+<body>
+<header>
+ <h1>🧺 Stock KRHR</h1>
+ <p>Semak stok. Rancang order. Mudah.</p>
+ <button onclick="backup()">⬇ Backup</button>
+ <button onclick="document.getElementById('restore').click()">⬆ Import</button>
+ <button id="install" hidden onclick="installApp()">＋ Pasang App</button>
+ <input id="restore" type="file" accept=".json,application/json" hidden onchange="restoreData(event)">
+</header>
+<main>
+ <div id="crumb"></div>
+ <div id="app"></div>
+ <p class="muted">Data disimpan pada peranti ini. Buat backup secara berkala.</p>
+</main>
+<script>
+const KEY='stockKRHR_v1';
+const starter={companies:[{id:'c1',name:'Ang Kim Lim',brands:[]}]};
+let db;
+try{db=JSON.parse(localStorage.getItem(KEY))||starter}catch(e){db=starter}
+let page='companies',cid='',bid='',deferredPrompt=null;
+const save=()=>localStorage.setItem(KEY,JSON.stringify(db));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const company=()=>db.companies.find(x=>x.id===cid);
+const brand=()=>company()?.brands.find(x=>x.id===bid);
+function go(p,c='',b=''){page=p;cid=c;bid=b;render()}
+function ask(label,value=''){return prompt(label,value)}
+function addCompany(){let name=ask('Nama company / supplier:');if(!name?.trim())return;db.companies.push({id:uid(),name:name.trim(),brands:[]});save();render()}
+function editCompany(id){let x=db.companies.find(x=>x.id===id),n=ask('Nama company:',x.name);if(n?.trim()){x.name=n.trim();save();render()}}
+function delCompany(id){let x=db.companies.find(x=>x.id===id);if(confirm('Padam '+x.name+' bersama semua brand dan barang?')){db.companies=db.companies.filter(y=>y.id!==id);save();render()}}
+function addBrand(){let name=ask('Nama brand / supplier:');if(!name?.trim())return;let salesman=ask('Nama salesman (pilihan):')||'';company().brands.push({id:uid(),name:name.trim(),salesman,items:[]});save();render()}
+function editBrand(id){let x=company().brands.find(x=>x.id===id),n=ask('Nama brand:',x.name);if(!n?.trim())return;x.name=n.trim();x.salesman=ask('Nama salesman:',x.salesman||'')||'';save();render()}
+function delBrand(id){let x=company().brands.find(x=>x.id===id);if(confirm('Padam brand '+x.name+' dan semua barangnya?')){company().brands=company().brands.filter(y=>y.id!==id);save();render()}}
+function addItem(){let name=ask('Nama barang:');if(!name?.trim())return;let unit=ask('Unit (contoh: kotak, pek, botol):','unit')||'unit';let stock=Math.max(0,Number(ask('Stok semasa:','0'))||0);let minStock=Math.max(0,Number(ask('Stok minimum untuk cadangan order:','0'))||0);let order=Math.max(0,Number(ask('Kuantiti order:','0'))||0);let note=ask('Nota:','')||'';brand().items.push({id:uid(),name:name.trim(),unit,stock,minStock,order,note,updatedAt:new Date().toLocaleDateString('ms-MY')});save();render()}
+function editItem(id){let x=brand().items.find(x=>x.id===id);let n=ask('Nama barang:',x.name);if(!n?.trim())return;x.name=n.trim();x.unit=ask('Unit:',x.unit||'unit')||'unit';x.minStock=Math.max(0,Number(ask('Stok minimum:',x.minStock||0))||0);save();render()}
+function delItem(id){let x=brand().items.find(x=>x.id===id);if(confirm('Padam barang '+x.name+'?')){brand().items=brand().items.filter(y=>y.id!==id);save();render()}}
+function update(id,key,val){let x=brand().items.find(x=>x.id===id);if(!x)return;x[key]=key==='note'?val:Math.max(0,Number(val)||0);if(key==='stock')x.updatedAt=new Date().toLocaleString('ms-MY');save();if(key==='stock'||key==='order')render()}
+function render(){
+ let c=company(),b=brand();
+ document.getElementById('crumb').innerHTML=`<button onclick="go('companies')">Senarai supplier</button>${page!=='companies'?' › <button onclick="go(\'brands\',cid)">'+esc(c?.name)+'</button>':''}${page==='items'?' › '+esc(b?.name):''}`;
+ let out='';
+ if(page==='companies'){
+ out=`<div class="card"><div class="row"><div><h2>Senarai supplier</h2><p class="muted">Pilih company untuk lihat brand dan barang.</p></div><button class="primary" onclick="addCompany()">＋ Tambah company</button></div></div>`;
+ out+=db.companies.map(x=>`<div class="card"><div class="row"><div><h3>${esc(x.name)}</h3><div class="muted">${x.brands.length} brand</div></div><div><button onclick="go('brands','${x.id}')">Buka →</button><button onclick="editCompany('${x.id}')">Edit</button><button onclick="delCompany('${x.id}')">Padam</button></div></div></div>`).join('');
+ if(!db.companies.length)out+='<div class="card">Belum ada supplier. Tekan Tambah company.</div>';
+ }
+ if(page==='brands'&&c){
+ out=`<div class="card"><div class="row"><div><h2>${esc(c.name)}</h2><p class="muted">Senarai brand / salesman</p></div><button class="primary" onclick="addBrand()">＋ Tambah brand</button></div></div>`;
+ out+=c.brands.map(x=>`<div class="card"><div class="row"><div><h3>${esc(x.name)}</h3><div class="muted">${esc(x.salesman||'')} · ${x.items.length} barang</div></div><div><button onclick="go('items',cid,'${x.id}')">Lihat barang →</button><button onclick="editBrand('${x.id}')">Edit</button><button onclick="delBrand('${x.id}')">Padam</button></div></div></div>`).join('');
+ if(!c.brands.length)out+='<div class="card">Belum ada brand. Tekan Tambah brand.</div>';
+ }
+ if(page==='items'&&c&&b){
+ out=`<div class="card"><div class="row"><div><h2>${esc(b.name)}</h2><p class="muted">${esc(c.name)}${b.salesman?' · '+esc(b.salesman):''}</p></div><button class="primary" onclick="addItem()">＋ Tambah barang</button></div></div>
+ <div class="card"><input id="search" placeholder="Cari barang atau nota…" oninput="filterRows()" style="width:100%"></div>
+ <div class="card tablebox"><table><thead><tr><th>Item</th><th>Stock</th><th>Order</th><th>Nota</th><th>Tindakan</th></tr></thead><tbody id="rows">${b.items.map(x=>row(x)).join('')}</tbody></table></div>
+ <div class="card"><button onclick="if(confirm('Kosongkan semua kuantiti order brand ini?')){brand().items.forEach(x=>x.order=0);save();render()}">↻ Reset Order</button></div>`;
+ }
+ document.getElementById('app').innerHTML=out;
+}
+function row(x){return `<tr data-search="${esc((x.name+' '+(x.note||'')).toLowerCase())}"><td><b>${esc(x.name)}</b><div class="muted">${esc(x.unit||'unit')} · Minimum ${Number(x.minStock)||0}</div></td><td><input class="qty" aria-label="Stok" type="number" min="0" value="${Number(x.stock)||0}" onchange="update('${x.id}','stock',this.value)"><div class="muted">${esc(x.updatedAt||'Belum direkod')}</div></td><td><input class="qty" aria-label="Order" type="number" min="0" value="${Number(x.order)||0}" onchange="update('${x.id}','order',this.value)"><div class="muted">Cadangan: ${Math.max(0,(Number(x.minStock)||0)-(Number(x.stock)||0))}</div></td><td><input class="note" aria-label="Nota" value="${esc(x.note||'')}" onchange="update('${x.id}','note',this.value)"></td><td><button onclick="editItem('${x.id}')">Edit</button><button onclick="delItem('${x.id}')">Padam</button></td></tr>`}
+function filterRows(){let q=document.getElementById('search').value.toLowerCase();document.querySelectorAll('#rows tr').forEach(r=>r.hidden=!r.dataset.search.includes(q))}
+function backup(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download='stock-krhr-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+async function restoreData(e){let f=e.target.files[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!Array.isArray(d.companies))throw Error();if(confirm('Import akan menggantikan data semasa. Teruskan?')){db=d;save();go('companies')}}catch(err){alert('Fail backup tidak sah')}e.target.value=''}
+render();
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('install').hidden=false});
+async function installApp(){if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;document.getElementById('install').hidden=true}
+window.addEventListener('appinstalled',()=>{document.getElementById('install').hidden=true});
+</script>
+</body>
+</html>
