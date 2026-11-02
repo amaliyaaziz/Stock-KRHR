@@ -1,4 +1,4 @@
-const CACHE_NAME = "stock-krhr-v3";
+const CACHE_NAME = "stock-krhr-v4";
 
 const APP_FILES = [
   "./",
@@ -8,6 +8,7 @@ const APP_FILES = [
   "./icon-192.png",
   "./icon-512.png",
   "./icon-512-maskable.png"
+  "./logo-krhr.png"
 ];
 
 self.addEventListener("install", event => {
