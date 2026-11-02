@@ -1,13 +1,9 @@
-const CACHE_NAME = "stock-krhr-v4";
+const CACHE_NAME = "stock-krhr-v5";
 
 const APP_FILES = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./icon.svg"
-  "./icon-192.png",
-  "./icon-512.png",
-  "./icon-512-maskable.png"
   "./logo-krhr.png"
 ];
 
